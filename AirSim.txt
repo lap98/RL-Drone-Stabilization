@@ -1,0 +1,43 @@
+Setup
+https://www.youtube.com/watch?v=DiqgsWIOoW4
+
+https://www.youtube.com/watch?v=uMgyNWmsaHA
+https://github.com/ElishaAz/simple_airsim
+
+https://microsoft.github.io/AirSim/use_precompiled/
+
+
+
+Setup Unreal and Visual Studio for AirSim
+
+1. Install Unreal Engine 4.27 (install epic games launcher, put account, download Engine), open it and "fix now"
+
+2. Download AirSim prebuildt source code and the environment that you want
+
+3. Place the Environment in AirSim/Unreal/Environment
+
+4.0 Install Visual Studio 2019 + C++ dev / Python
+
+4.1 https://microsoft.github.io/AirSim/build_windows/
+Use Visual Studio 2019 Developer Command Prompt with Admin priv to run AirSim-1.7.0-windows/build.cmd
+
+5. https://microsoft.github.io/AirSim/unreal_blocks/
+Install .net framework 4.6.2 Developer (SDK), desktop runtime 3.1.24 (asks for it anyways)
+Run AirSim-1.7.0-windows/Unreal/Environments/Blocks/update_from_git.bat
+
+6. Open .sln with Visual Studio 2022 (or 2019 if the only installed), set Blocks as default Project, DebugGame Editor & Win64, press F5
+https://docs.microsoft.com/it-it/visualstudio/ide/how-to-set-multiple-startup-projects?view=vs-2022
+
+7. Once Unreal is open with the project, click "Play" and use keyboard to move wtc
+
+
+
+Python Interface with AirSim
+
+0. Take AirSim-1.7.0-windows/PythonClient/multirotor/hello_drone.py
+
+1. Delete first line of import
+
+2. Create Anaconda env: advdl_env
+
+2.1. pip install numpy, opencv-python, msgpack-rpc-python, airsim (https://microsoft.github.io/AirSim/apis/)
