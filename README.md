@@ -36,14 +36,8 @@
 4. Install the following libraries
     ```bash
     pip install numpy
-    ```
-    ```bash
     pip install opencv-python
-    ```
-    ```bash
     pip install msgpack-rpc-python
-    ```
-    ```bash
     pip install airsim
     ```
 5. Install Visual Studio & recommended python extensions (optional)
@@ -59,3 +53,9 @@
 
 3. Run first.py in order to control the drone
 
+## Reinforcement learning
+
+In order to use TF-Agents library:
+```bash
+pip install --user tf-agents[reverb]
+```
