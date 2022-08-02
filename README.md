@@ -23,17 +23,17 @@
 
 9. Open .sln with Visual Studio 2022 (or 2019 if the only installed), as suggested in this [link](https://docs.microsoft.com/it-it/visualstudio/ide/how-to-set-multiple-startup-projects?view=vs-2022) set Blocks as default Project, DebugGame Editor & Win64. Finally press F5 
 
-8. Once Unreal is open with the project, click "Play" and use the keyboard to move the drone.
+10. Once Unreal is open with the project, click "Play" and use the keyboard to move the drone.
 
 ## Python Interface with AirSim
 
-0. Take AirSim-1.7.0-windows/PythonClient/multirotor/hello_drone.py
+1. Take AirSim-1.7.0-windows/PythonClient/multirotor/hello_drone.py
 
-1. Delete first line of import.
+2. Delete first line of import.
 
-2. Create an Anaconda environment.
+3. Create an Anaconda environment.
 
-3. Install the following libraries
+4. Install the following libraries
     ```bash
     pip install numpy
     ```
@@ -46,6 +46,9 @@
     ```bash
     pip install airsim
     ```
+5. Install Visual Studio & recommended python extensions (optional)
+
+6. Unreal might lag if there is another window on top.To avoid this go in Unreal Engine settings: Edit->Editor preferences->search Performance->disable "Use less CPU when in background"
 
 ## Run the project
 1. Clone the repository
