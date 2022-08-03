@@ -1,5 +1,14 @@
 # RL-Drone-Stabilization
 
+The aim of the project is to implement a Reinforcement Learning Architecture able to control aerial quadricopters, even in commercial drones.
+The scenario concerns the advanced stabilization of a drone in critical situations such as high-speed wind, recovery due to a free fall, a propeller failure and any kind of features that could ensure safety during a flight in densely populated areas.
+
+First of all we developed the project in a virtual environment, using the AirSim simulator, based on Unreal Engine, which was created precisely for the purpose of supporting the development of reinforcement learning applications for vehicles and quadcopters.
+
+The idea was to initially simulate it in a virtual environment, to train the agent through deep RL, developing an MLP that runs with low latency.
+In the future it would be interesting to try to deploy, safely, on a physical drone.
+
+
 ## Environmental Setup
 1. Install Unreal Engine (4.27 suggested) from [Epic Games Launcher](https://store.epicgames.com/it/download).
 
