@@ -45,3 +45,18 @@ Python Interface with AirSim
 3. Install Visual Studio & recommended python extensions
 
 4. Unreal might lag if there is another window on top: Edit->Editor preferences->search Performance->disable "Use less CPU when in background"
+
+
+
+Drone settings
+
+0. Setup the settings.json in the working folder in Documenti/AirSim
+
+1. Decide whether to use simpleflight or PX4 (https://microsoft.github.io/AirSim/px4_setup/)
+
+
+
+Tips
+
+The async functions overwrite previous calls (u can use the output from the NN setting an arbitrary duration)
+After 1 second without api calls, the drone goes in hovering mode
