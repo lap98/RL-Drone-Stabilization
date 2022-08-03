@@ -30,9 +30,11 @@ In the future it would be interesting to try to deploy, safely, on a physical dr
 
 8. Run AirSim-1.7.0-windows/Unreal/Environments/Blocks/update_from_git.bat
 
-9. Open .sln with Visual Studio 2022 (or 2019 if the only installed), as suggested in this [link](https://docs.microsoft.com/it-it/visualstudio/ide/how-to-set-multiple-startup-projects?view=vs-2022) set Blocks as default Project, DebugGame Editor & Win64. Finally press F5 
+9. Add settings.json inside airsim folder (settings.json is a file containing all the quadricopter settings)
 
-10. Once Unreal is open with the project, click "Play" and use the keyboard to move the drone.
+10. Open .sln with Visual Studio 2022 (or 2019 if the only installed), as suggested in this [link](https://docs.microsoft.com/it-it/visualstudio/ide/how-to-set-multiple-startup-projects?view=vs-2022) set Blocks as default Project, DebugGame Editor & Win64. Finally press F5 
+
+11. Once Unreal is open with the project, click "Play" and use the keyboard to move the drone.
 
 ## Python Interface with AirSim
 
