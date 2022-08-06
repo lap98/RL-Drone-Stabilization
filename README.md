@@ -68,5 +68,6 @@ In the future it would be interesting to try to deploy, safely, on a physical dr
 
 In order to use TF-Agents library:
 ```bash
-pip install --user tf-agents[reverb]
+pip install tensorflow
+pip install tf-agents==0.13.0
 ```
