@@ -5,8 +5,15 @@ import tensorflow as tf
 import numpy as np
 
 from tf_agents.environments import py_environment
+from tf_agents.environments import tf_py_environment
 from tf_agents.trajectories import time_step as ts
 from tf_agents.specs import array_spec
+from tf_agents.networks import q_network
+from tf_agents.agents import DdpgAgent
+from tf_agents.utils import common
+from tf_agents.replay_buffers import tf_uniform_replay_buffer
+from tf_agents.policies import random_tf_policy
+from tf_agents.drivers import dynamic_step_driver
 
 # connect to the AirSim simulator
 client = airsim.MultirotorClient()
@@ -43,6 +50,7 @@ print(q)
 
 # How to setup the environment https://towardsdatascience.com/creating-a-custom-environment-for-tensorflow-agent-tic-tac-toe-example-b66902f73059
 # py_environment https://www.tensorflow.org/agents/api_docs/python/tf_agents/environments/PyEnvironment?hl=en#get_state
+# https://towardsdatascience.com/cartpole-problem-using-tf-agents-build-your-first-reinforcement-learning-application-3e6006adeba7
 class DroneEnvironment(py_environment.PyEnvironment):
 
   def __init__(self):
@@ -168,3 +176,59 @@ class DroneEnvironment(py_environment.PyEnvironment):
       return ts.transition(np.array(self._state, dtype=np.float32), 
                             reward=reward, 
                             discount=0.9)
+
+
+# q_network https://www.tensorflow.org/agents/api_docs/python/tf_agents/networks/q_network/QNetwork
+
+# We create an instance of our earlier described environment
+# inside of a TF-Agents wrapper 
+environment = tf_py_environment.TFPyEnvironment(DroneEnvironment())
+# Network
+q_net = q_network.QNetwork(environment.observation_spec(),
+         environment.action_spec(),
+         fc_layer_params     = (75,40),
+         batch_squash        = True)
+q_net.summary()
+optimizer = tf.compat.v1.train.RMSPropOptimizer(learning_rate=1e-3)
+agent = DdpgAgent(environment.time_step_spec(),
+             environment.action_spec(),
+             q_network           = q_net,
+             optimizer           = optimizer,
+             td_errors_loss_fn   = common.element_wise_squared_loss)
+agent.initialize()
+
+
+# Create our replay buffer
+replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
+           data_spec       = agent.collect_data_spec,
+           max_length      = 100_000)
+# Random Policy for data collection
+random_policy = random_tf_policy.RandomTFPolicy(environment.time_step_spec(),
+environment.action_spec())
+# Initiate RL Driver for initial experience collection
+collect_driver = dynamic_step_driver.DynamicStepDriver(environment,
+                      random_policy,
+                      replay_buffer,
+                      num_steps = 500)
+# Fill our Replay Buffer with random experiences
+collect_driver.run()
+
+# Create a driver for training and a driver for evaluation
+train_driver = dynamic_step_driver.DynamicStepDriver(environment,
+                  agent.collect_policy,
+                  replay_buffer,
+                  num_steps = 50)
+# Transform Replay Buffer to Dataset
+dataset = replay_buffer.as_dataset(num_parallel_calls=3,
+                        sample_batch_size=32,
+                        num_steps=2).prefetch(3)
+iterator = iter(dataset)
+# Training Loop
+for epoch in range(2000):
+# Perform some movements in the environment
+   train_driver.run()
+# Sample from our buffer and train the agent's network.
+   experience, _ = next(iterator)
+# Train on GPU
+   with tf.device('/GPU:0'):
+      agent.train(experience)
