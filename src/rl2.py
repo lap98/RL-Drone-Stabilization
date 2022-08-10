@@ -14,36 +14,38 @@ from tf_agents.utils import common
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.policies import random_tf_policy
 from tf_agents.drivers import dynamic_step_driver
+from tf_agents.agents.ddpg.critic_network import CriticNetwork
+from tf_agents.agents.ddpg.actor_network import ActorNetwork
 
-# connect to the AirSim simulator
-client = airsim.MultirotorClient()
-client.confirmConnection()
-client.enableApiControl(True)
-client.armDisarm(True)
+# # connect to the AirSim simulator
+# client = airsim.MultirotorClient()
+# client.confirmConnection()
+# client.enableApiControl(True)
+# client.armDisarm(True)
 
-imu_data = client.getImuData()
-s = pprint.pformat(imu_data)
-print("imu_data: %s" % s)
+# imu_data = client.getImuData()
+# s = pprint.pformat(imu_data)
+# print("imu_data: %s" % s)
 
-dist_data = client.getDistanceSensorData(vehicle_name="SimpleFlight")
-print(f"Distance sensor data: {dist_data.distance}")
+# dist_data = client.getDistanceSensorData(vehicle_name="SimpleFlight")
+# print(f"Distance sensor data: {dist_data.distance}")
 
-client.takeoffAsync().join()
-client.moveByMotorPWMsAsync(front_right_pwm=1, rear_left_pwm=1, front_left_pwm=1, rear_right_pwm=1, duration=5).join()
-#client.moveByMotorPWMsAsync(front_right_pwm=0, rear_left_pwm=0, front_left_pwm=0.1, rear_right_pwm=0.1, duration=5)
-#client.cancelLastTask()
+# client.takeoffAsync().join()
+# client.moveByMotorPWMsAsync(front_right_pwm=1, rear_left_pwm=1, front_left_pwm=1, rear_right_pwm=1, duration=5).join()
+# #client.moveByMotorPWMsAsync(front_right_pwm=0, rear_left_pwm=0, front_left_pwm=0.1, rear_right_pwm=0.1, duration=5)
+# #client.cancelLastTask()
 
-dist_data = client.getDistanceSensorData(vehicle_name="SimpleFlight")
-print(f"Distance sensor data: {dist_data.distance}")
+# dist_data = client.getDistanceSensorData(vehicle_name="SimpleFlight")
+# print(f"Distance sensor data: {dist_data.distance}")
 
-# let's quit cleanly
-#client.armDisarm(False)
-#client.enableApiControl(False)
+# # let's quit cleanly
+# #client.armDisarm(False)
+# #client.enableApiControl(False)
 
-# LOSS FUNCTION 
-# Orientation and Position
-q = client.simGetVehiclePose()
-print(q)
+# # LOSS FUNCTION 
+# # Orientation and Position
+# q = client.simGetVehiclePose()
+# print(q)
 
 # TF-agents library at the following link https://www.tensorflow.org/agents and the tutorial https://www.tensorflow.org/agents/tutorials/0_intro_rl
 
@@ -59,7 +61,7 @@ class DroneEnvironment(py_environment.PyEnvironment):
 
     # Action space with respective min and max values (control motors power)
     self._action_spec = array_spec.BoundedArraySpec(
-        shape=(4), dtype=np.float32, minimum=0, maximum=1, name='action')
+        shape=(4,), dtype=np.float32, minimum=0, maximum=1, name='action')
     
     self.client = airsim.MultirotorClient()
     self.client.confirmConnection()
@@ -84,7 +86,7 @@ class DroneEnvironment(py_environment.PyEnvironment):
     # barometro
     self._observation_spec = array_spec.ArraySpec(
         shape=(8,), dtype=np.float32, name='observation')
-
+  
     # The state of the environment which can be seen by the drone using its sensors
     # The state represents also the input of the network
     self._state = [self.client.getImuData().angular_velocity.x_val, self.client.getImuData().angular_velocity.y_val, self.client.getImuData().angular_velocity.z_val, 
@@ -183,25 +185,40 @@ class DroneEnvironment(py_environment.PyEnvironment):
 # We create an instance of our earlier described environment
 # inside of a TF-Agents wrapper 
 environment = tf_py_environment.TFPyEnvironment(DroneEnvironment())
+
 # Network
-q_net = q_network.QNetwork(environment.observation_spec(),
-         environment.action_spec(),
-         fc_layer_params     = (75,40),
-         batch_squash        = True)
-q_net.summary()
-optimizer = tf.compat.v1.train.RMSPropOptimizer(learning_rate=1e-3)
+
+actor_net = ActorNetwork(
+    environment.observation_spec(), environment.action_spec(), fc_layer_params=(75,40),
+    
+)
+
+critic_net = CriticNetwork(
+    (environment.observation_spec(), environment.action_spec()), joint_fc_layer_params=(75,40))
+
+
+optimizer = tf.compat.v1.train.AdamOptimizer()
 agent = DdpgAgent(environment.time_step_spec(),
              environment.action_spec(),
-             q_network           = q_net,
-             optimizer           = optimizer,
+             actor_network = actor_net,
+             critic_network = critic_net,
+             actor_optimizer = optimizer,
+             critic_optimizer = optimizer,
              td_errors_loss_fn   = common.element_wise_squared_loss)
 agent.initialize()
 
 
 # Create our replay buffer
 replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
-           data_spec       = agent.collect_data_spec,
-           max_length      = 100_000)
+# data_spec =  (
+# tf.TensorSpec([1], tf.float32, 'step_type'),
+# tf.TensorSpec([4], tf.float32, 'observation'),
+# tf.TensorSpec([1], tf.float32, 'reward'),
+# tf.TensorSpec([1], tf.float32, 'discount'),
+# ),
+data_spec = agent.collect_data_spec,
+batch_size = 32,
+max_length = 100000)
 # Random Policy for data collection
 random_policy = random_tf_policy.RandomTFPolicy(environment.time_step_spec(),
 environment.action_spec())
