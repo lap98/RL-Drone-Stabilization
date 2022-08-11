@@ -16,36 +16,7 @@ from tf_agents.policies import random_tf_policy
 from tf_agents.drivers import dynamic_step_driver
 from tf_agents.agents.ddpg.critic_network import CriticNetwork
 from tf_agents.agents.ddpg.actor_network import ActorNetwork
-
-# # connect to the AirSim simulator
-# client = airsim.MultirotorClient()
-# client.confirmConnection()
-# client.enableApiControl(True)
-# client.armDisarm(True)
-
-# imu_data = client.getImuData()
-# s = pprint.pformat(imu_data)
-# print("imu_data: %s" % s)
-
-# dist_data = client.getDistanceSensorData(vehicle_name="SimpleFlight")
-# print(f"Distance sensor data: {dist_data.distance}")
-
-# client.takeoffAsync().join()
-# client.moveByMotorPWMsAsync(front_right_pwm=1, rear_left_pwm=1, front_left_pwm=1, rear_right_pwm=1, duration=5).join()
-# #client.moveByMotorPWMsAsync(front_right_pwm=0, rear_left_pwm=0, front_left_pwm=0.1, rear_right_pwm=0.1, duration=5)
-# #client.cancelLastTask()
-
-# dist_data = client.getDistanceSensorData(vehicle_name="SimpleFlight")
-# print(f"Distance sensor data: {dist_data.distance}")
-
-# # let's quit cleanly
-# #client.armDisarm(False)
-# #client.enableApiControl(False)
-
-# # LOSS FUNCTION 
-# # Orientation and Position
-# q = client.simGetVehiclePose()
-# print(q)
+from tf_agents.trajectories import TimeStep
 
 # TF-agents library at the following link https://www.tensorflow.org/agents and the tutorial https://www.tensorflow.org/agents/tutorials/0_intro_rl
 
@@ -84,8 +55,12 @@ class DroneEnvironment(py_environment.PyEnvironment):
     # linear_acceleration.z_val
     # dist_data.distance (distance from the ground)
     # barometro
-    self._observation_spec = array_spec.ArraySpec(
-        shape=(8,), dtype=np.float32, name='observation')
+    #self._observation_spec = array_spec.ArraySpec(shape=(8,), dtype=np.float32, name='observation')
+    self._discount_spec = array_spec.ArraySpec(shape=(1,),dtype=np.float32, name='discount')
+    self._observation_spec = array_spec.ArraySpec(shape=(1,1,8,),dtype=np.float32, name='observation')
+    self._reward_spec = array_spec.ArraySpec(shape=(1,),dtype=np.float32, name='reward')
+    self._step_type_spec = array_spec.ArraySpec(shape=(1,),dtype=np.float32, name='step_type')
+    self._time_step_spec = TimeStep (self._step_type_spec, self._reward_spec, self._discount_spec, self._observation_spec)
   
     # The state of the environment which can be seen by the drone using its sensors
     # The state represents also the input of the network
@@ -94,10 +69,12 @@ class DroneEnvironment(py_environment.PyEnvironment):
                   self.client.getBarometerData(vehicle_name="SimpleFlight").pressure/101325,self.client.getDistanceSensorData(vehicle_name="SimpleFlight").distance/6 ]
     self._episode_ended = False
 
-
   def action_spec(self):
     return self._action_spec
 
+  def time_step_spec(self):
+    return self._time_step_spec
+  
   def observation_spec(self):
     return self._observation_spec
 
