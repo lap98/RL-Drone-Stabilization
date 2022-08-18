@@ -22,6 +22,7 @@ from tf_agents.drivers import dynamic_step_driver
 from tf_agents.agents.ddpg.critic_network import CriticNetwork
 from tf_agents.agents.ddpg.actor_network import ActorNetwork
 from tf_agents.metrics import tf_metrics
+import datetime
 
 
 
@@ -31,6 +32,8 @@ from tf_agents.metrics import tf_metrics
 class DroneEnvironment(py_environment.PyEnvironment):
 
   def __init__(self):
+    #self.last_TS = datetime.datetime.now()######DEBUG
+
 
     self.client = airsim.MultirotorClient()
     self.client.confirmConnection()
@@ -39,15 +42,13 @@ class DroneEnvironment(py_environment.PyEnvironment):
 
     self.initialPose = self.client.simGetObjectPose(object_name="SimpleFlight")
 
-    # Observation space: IMU (3x angular velocity, 3x linear acceleration), ultrasound distance from the ground, barometer;
+    # Observation space: IMU (3x angular velocity, 3x linear acceleration), ultrasound distance from the ground, barometer
     # Action space: control motors power
-    self._action_spec = array_spec.BoundedArraySpec(shape=(4,), dtype=np.float32, name='action', minimum=0.0, maximum=1.0)
     self._observation_spec = array_spec.ArraySpec(shape=(8,),dtype=np.float32, name='observation')
-  
+    self._action_spec = array_spec.BoundedArraySpec(shape=(4,), dtype=np.float32, name='action', minimum=0.0, maximum=1.0)
+
     # The state of the environment which can be seen by the drone using its sensors; it represents also the input of the network
-    self._state = np.array([self.client.getImuData().angular_velocity.x_val, self.client.getImuData().angular_velocity.y_val, self.client.getImuData().angular_velocity.z_val, 
-                            self.client.getImuData().linear_acceleration.x_val, self.client.getImuData().linear_acceleration.y_val, self.client.getImuData().linear_acceleration.z_val,
-                            self.client.getBarometerData(vehicle_name="SimpleFlight").pressure/101325,self.client.getDistanceSensorData(vehicle_name="SimpleFlight").distance/6])
+    self._state = self.getState()
     self._episode_ended = False
 
   def action_spec(self):
@@ -67,10 +68,8 @@ class DroneEnvironment(py_environment.PyEnvironment):
     self.client.simSetVehiclePose(pose, ignore_collision=False)
     #self.client.takeoffAsync().join()
     self.initialPose = self.client.simGetObjectPose(object_name="SimpleFlight")
-    self._state = [self.client.getImuData().angular_velocity.x_val, self.client.getImuData().angular_velocity.y_val, self.client.getImuData().angular_velocity.z_val,
-                  self.client.getImuData().linear_acceleration.x_val, self.client.getImuData().linear_acceleration.y_val, self.client.getImuData().linear_acceleration.z_val,
-                  self.client.getBarometerData(vehicle_name="SimpleFlight").pressure/101325,self.client.getDistanceSensorData(vehicle_name="SimpleFlight").distance/6]
-    return ts.restart(np.array(self._state, dtype=np.float32))
+    self._state = self.getState()
+    return ts.restart(self._state)
 
   def _step(self, action):
     # If the episode is done, reset the environment
@@ -85,16 +84,18 @@ class DroneEnvironment(py_environment.PyEnvironment):
     if collision:
       self._episode_ended = True
       reward = -1 # a collision occured, give a negative reward
-      return ts.termination(np.array(self._state, dtype=np.float32), reward) # return terminal state to the agent
+      return ts.termination(self._state, reward) # return terminal state to the agent
     else: # if were still going on we transition to the next state
-      return ts.transition(np.array(self._state, dtype=np.float32), reward=reward, discount=0.9)
+      return ts.transition(self._state, reward=reward, discount=0.9)
 
   def move(self, action, duration=0.1, continuous=False):
     if self.client.simGetCollisionInfo().has_collided: return True
 
     if continuous == False: # discrete actions
-      self.client.hoverAsync()
-      self.client.moveByMotorPWMsAsync(front_right_pwm=float(action[0]), rear_left_pwm=float(action[1]), front_left_pwm=float(action[2]), rear_right_pwm=float(action[3]), duration=duration)
+      #self.client.hoverAsync()
+      self.client.moveByMotorPWMsAsync(front_right_pwm=float(action[0]), rear_left_pwm=float(action[1]), front_left_pwm=float(action[2]), rear_right_pwm=float(action[3]), duration=duration).join()######join or no join?
+      #print(datetime.datetime.now()-self.last_TS)######DEBUG
+      #self.last_TS = datetime.datetime.now()######DEBUG
       if self.client.simGetCollisionInfo().has_collided: return True
       return False
     else: # continuous movements
@@ -102,10 +103,12 @@ class DroneEnvironment(py_environment.PyEnvironment):
       if self.client.simGetCollisionInfo().has_collided: return True
       return False
 
+  '''Returns the state as a numpy array with float32 values
+  '''
   def getState(self):
     return np.array([self.client.getImuData().angular_velocity.x_val, self.client.getImuData().angular_velocity.y_val, self.client.getImuData().angular_velocity.z_val,
                       self.client.getImuData().linear_acceleration.x_val, self.client.getImuData().linear_acceleration.y_val, self.client.getImuData().linear_acceleration.z_val,
-                      self.client.getBarometerData(vehicle_name="SimpleFlight").pressure/101325,self.client.getDistanceSensorData(vehicle_name="SimpleFlight").distance/6])
+                      self.client.getBarometerData(vehicle_name="SimpleFlight").pressure/101325,self.client.getDistanceSensorData(vehicle_name="SimpleFlight").distance/6], dtype=np.float32)
 
   def reward_function(self,pose):
     reward = 1/(1+np.sqrt((pose.position.x_val - self.initialPose.position.x_val)**2+(pose.position.y_val - self.initialPose.position.y_val)**2+(pose.position.z_val - self.initialPose.position.z_val)**2))
@@ -120,7 +123,7 @@ class DroneEnvironment(py_environment.PyEnvironment):
 #################################################
 # https://www.tensorflow.org/agents/tutorials/10_checkpointer_policysaver_tutorial?hl=en
 
-collect_steps_per_iteration = 300 # maximum number of steps in each episode
+collect_steps_per_iteration = 50 # maximum number of steps in each episode
 replay_buffer_capacity = 10000
 
 fc_layer_params = (75, 40,)
