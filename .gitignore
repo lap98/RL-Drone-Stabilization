@@ -1,3 +1,8 @@
+#ckpts folder and policies folder
+/ckpts
+/policies
+/trining_data
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
