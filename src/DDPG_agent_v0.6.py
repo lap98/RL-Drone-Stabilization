@@ -43,7 +43,7 @@ save_path = 'C:/Users/aless/Downloads/Uni/Advanced_Deep_Learning_Models_and_Meth
 
 # Data collection
 replay_buffer_capacity = 100000
-initial_collect_steps = 1000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
+initial_collect_steps = 5000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
 
 # Agent
 fc_layer_params = (64, 64,)
@@ -90,6 +90,8 @@ global_step = tf.compat.v1.train.get_or_create_global_step()
 # Network https://www.tensorflow.org/agents/api_docs/python/tf_agents/networks/q_network/QNetwork
 actor_net = ActorNetwork(tf_env.observation_spec(), tf_env.action_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
 critic_net = CriticNetwork((tf_env.observation_spec(), tf_env.action_spec()), joint_fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
+tgt_actor_net = ActorNetwork(tf_env.observation_spec(), tf_env.action_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
+tgt_critic_net = CriticNetwork((tf_env.observation_spec(), tf_env.action_spec()), joint_fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
 # DDPG code
 agent = DdpgAgent(tf_env.time_step_spec(),
                   tf_env.action_spec(),
@@ -97,6 +99,10 @@ agent = DdpgAgent(tf_env.time_step_spec(),
                   critic_network=critic_net,
                   actor_optimizer=tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate),
                   critic_optimizer=tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate),
+                  target_actor_network=tgt_actor_net,
+                  target_critic_network=tgt_critic_net,
+                  target_update_tau=0.7,
+                  target_update_period=2,
                   #td_errors_loss_fn=common.element_wise_squared_loss,
                   gamma=0.9,
                   train_step_counter=global_step)
@@ -158,7 +164,7 @@ def train_one_iteration():
   end = datetime.datetime.now()
   print('Control loop timing, for 1 step:', (end-start)/collect_steps_per_iteration)
   experience, unused_info = next(iterator) # sample a batch of data from the buffer and update the agent's network
-  with tf.device('/GPU:0'): train_loss = agent.train(experience) # trains on 1 batch of experience
+  with tf.device('/CPU:0'): train_loss = agent.train(experience) # trains on 1 batch of experience
   iteration = agent.train_step_counter.numpy()
   print ('Iteration: {0}, loss: {1}'.format(iteration, train_loss.loss))
 
