@@ -39,11 +39,11 @@ tf.random.set_seed(12345)
 
 # https://www.tensorflow.org/agents/tutorials/10_checkpointer_policysaver_tutorial?hl=en
 
-save_path = 'C:/Users/aless/Downloads/Uni/Advanced_Deep_Learning_Models_and_Methods/Project/python_code/training_data/' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+save_path = os.getcwd() + '/training_data/' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # Data collection
-replay_buffer_capacity = 100000
-initial_collect_steps = 5000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
+replay_buffer_capacity = 10000
+initial_collect_steps = 1000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
 
 # Agent
 fc_layer_params = (64, 64,)
@@ -52,7 +52,7 @@ fc_layer_params = (64, 64,)
 train_env_steps_limit = 100 # maximum number of steps in the TimeLimit of the training environment
 collect_steps_per_iteration = 100 # maximum number of steps in each episode
 
-epochs = 150
+epochs = 1500
 batch_size = 128
 learning_rate = 1e-3
 checkpoint_dir = save_path + '/ckpts'
@@ -60,7 +60,7 @@ policy_dir = save_path + '/policies'
 ckpts_interval = 10 # every how many epochs to store a checkpoint during training
 
 # Evaluation
-eval_env_steps_limit = 1000 # maximum number of steps in the TimeLimit of the evaluation environment
+eval_env_steps_limit = 100 # maximum number of steps in the TimeLimit of the evaluation environment
 num_eval_episodes = 5
 eval_interval = 50 # interval for evaluation and policy saving, =epochs for evaluation only at the end
 
