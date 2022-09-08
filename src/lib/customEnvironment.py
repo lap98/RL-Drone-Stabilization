@@ -34,7 +34,7 @@ class DroneEnvironment(py_environment.PyEnvironment):
     self.client.enableApiControl(True)
     self.client.armDisarm(True)
     # Observation space: IMU (3x angular velocity, 3x linear acceleration), ultrasound distance from the ground, barometer
-    self._observation_spec = array_spec.ArraySpec(shape=(7,),dtype=np.float32, name='observation')
+    self._observation_spec = array_spec.ArraySpec(shape=(13,),dtype=np.float32, name='observation')
     # Action space: control motors power
     self._action_spec = array_spec.BoundedArraySpec(shape=(4,), dtype=np.float32, name='action', minimum=0.0, maximum=1.0)
     # The state of the environment which can be seen by the drone using its sensors; it represents also the input of the network
@@ -121,10 +121,10 @@ class DroneEnvironment(py_environment.PyEnvironment):
   '''
   def getState(self):
     pose = self.client.simGetVehiclePose()
-    #imu_data = self.client.getImuData()
+    imu_data = self.client.getImuData()
     return np.array([(pose.position.z_val-self.initial_pose.position.z_val)/10, (pose.position.x_val-self.initial_pose.position.x_val)/10, (pose.position.y_val-self.initial_pose.position.y_val)/10, # between -1 and 1 more or less
-                    #imu_data.angular_velocity.x_val/50, imu_data.angular_velocity.y_val/50, imu_data.angular_velocity.z_val/50, # at most around 30ish?
-                    #imu_data.linear_acceleration.x_val/50, imu_data.linear_acceleration.y_val/50, imu_data.linear_acceleration.z_val/50, # at most around 30ish?
+                    imu_data.angular_velocity.x_val/50, imu_data.angular_velocity.y_val/50, imu_data.angular_velocity.z_val/50, # at most around 30ish?
+                    imu_data.linear_acceleration.x_val/50, imu_data.linear_acceleration.y_val/50, imu_data.linear_acceleration.z_val/50, # at most around 30ish?
                     pose.orientation.w_val, pose.orientation.x_val, pose.orientation.y_val, pose.orientation.z_val], # between -1 and 1
                     dtype=np.float32)
     
@@ -146,7 +146,20 @@ class DroneEnvironment(py_environment.PyEnvironment):
     # scaled_loss = np.log(1.5+loss) # apply logarithmic scaling to have values around 0.4-2.6 not changing too much
     # reward = -scaled_loss
     reward = 0
-    if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 5 ): reward = reward + 1
-    if(abs(pose.position.y_val-self.initial_pose.position.z_val) < 5 ): reward = reward + 1
-    if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 5 ): reward = reward + 1
+    if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 0.1 ): reward = reward + 100
+    if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 0.1 ): reward = reward + 100
+    if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 0.1 ): reward = reward + 100
+    if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 0.5 ): reward = reward + 20
+    if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 0.5 ): reward = reward + 20
+    if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 0.5 ): reward = reward + 20
+    if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 1 ): reward = reward + 10
+    if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 1 ): reward = reward + 10
+    if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 1 ): reward = reward + 10
+    if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 2 ): reward = reward + 5
+    if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 2 ): reward = reward + 5
+    if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 2 ): reward = reward + 5
+    if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 3 ): reward = reward + 1
+    if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 3 ): reward = reward + 1
+    if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 3 ): reward = reward + 1
+    
     return reward

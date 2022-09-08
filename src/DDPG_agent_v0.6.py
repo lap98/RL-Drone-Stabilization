@@ -29,8 +29,8 @@ from tf_agents.agents.ddpg.actor_network import ActorNetwork
 from tf_agents.metrics import tf_metrics
 from tf_agents.environments import TimeLimit
 
-np.random.seed(1234)
-tf.random.set_seed(12345)
+np.random.seed(4456)
+tf.random.set_seed(4456)
 
 
 #################################################
@@ -42,15 +42,15 @@ tf.random.set_seed(12345)
 save_path = os.getcwd() + '/training_data/' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # Data collection
-replay_buffer_capacity = 10000
-initial_collect_steps = 1000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
+replay_buffer_capacity = 1000000
+initial_collect_steps = 500 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
 
 # Agent
 fc_layer_params = (64, 64,)
 
 # Training
-train_env_steps_limit = 100 # maximum number of steps in the TimeLimit of the training environment
-collect_steps_per_iteration = 100 # maximum number of steps in each episode
+train_env_steps_limit = 150 # maximum number of steps in the TimeLimit of the training environment
+collect_steps_per_iteration = 150 # maximum number of steps in each episode
 
 epochs = 1500
 batch_size = 128
@@ -60,9 +60,9 @@ policy_dir = save_path + '/policies'
 ckpts_interval = 10 # every how many epochs to store a checkpoint during training
 
 # Evaluation
-eval_env_steps_limit = 100 # maximum number of steps in the TimeLimit of the evaluation environment
+eval_env_steps_limit = 150 # maximum number of steps in the TimeLimit of the evaluation environment
 num_eval_episodes = 5
-eval_interval = 50 # interval for evaluation and policy saving, =epochs for evaluation only at the end
+eval_interval = 25 # interval for evaluation and policy saving, =epochs for evaluation only at the end
 
 
 #################################################
