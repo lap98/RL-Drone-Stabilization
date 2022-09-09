@@ -1,5 +1,6 @@
 #ckpts folder and policies folder
 /training_data/*
+/training_data_wind/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
