@@ -9,17 +9,18 @@
 #################################################
 
 import os
+import sys
 import time
 import datetime
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from lib.customEnvironment import DroneEnvironment
+from lib.customEnvironment_v0_4 import DroneEnvironment
 from lib.plotters import Plotter
 from tf_agents.environments import tf_py_environment
 from tf_agents.trajectories import time_step as ts
 from tf_agents.specs import array_spec
-from tf_agents.agents import SacAgent
+from tf_agents.agents import DdpgAgent
 from tf_agents.utils import common
 from tf_agents.policies import policy_saver
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
@@ -44,16 +45,16 @@ save_path = 'C:/Users/aless/Downloads/Uni/Advanced_Deep_Learning_Models_and_Meth
 
 # Data collection
 replay_buffer_capacity = 100000
-initial_collect_steps = 1000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
+initial_collect_steps = 5000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
 
 # Agent
-fc_layer_params = (64, 64,)
+fc_layer_params = (16, 16,)#(64, 64,)
 
 # Training
 train_env_steps_limit = 100 # maximum number of steps in the TimeLimit of the training environment
 collect_steps_per_iteration = 100 # maximum number of steps in each episode
 
-epochs = 150
+epochs = 1000
 batch_size = 128
 learning_rate = 1e-3
 checkpoint_dir = save_path + '/ckpts'
@@ -61,8 +62,8 @@ policy_dir = save_path + '/policies'
 ckpts_interval = 10 # every how many epochs to store a checkpoint during training
 
 # Evaluation
-eval_env_steps_limit = 1000 # maximum number of steps in the TimeLimit of the evaluation environment
-num_eval_episodes = 5
+eval_env_steps_limit = 200 # maximum number of steps in the TimeLimit of the evaluation environment
+num_eval_episodes = 5 # number of evaluation episodes in the evaluation
 eval_interval = 50 # interval for evaluation and policy saving, =epochs for evaluation only at the end
 
 
@@ -91,19 +92,18 @@ global_step = tf.compat.v1.train.get_or_create_global_step()
 # Network https://www.tensorflow.org/agents/api_docs/python/tf_agents/networks/q_network/QNetwork
 actor_net = ActorNetwork(tf_env.observation_spec(), tf_env.action_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
 critic_net = CriticNetwork((tf_env.observation_spec(), tf_env.action_spec()), joint_fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
-# Td3 agent ###ADD ALL THE OTHER NETWORKS AND ADDRESS THE PARAMETERS
-agent = SacAgent(tf_env.time_step_spec(),
+# DDPG code
+agent = DdpgAgent(tf_env.time_step_spec(),
                   tf_env.action_spec(),
                   actor_network=actor_net,
                   critic_network=critic_net,
-                  actor_optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-                  critic_optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-                  alpha_optimizer=tf.keras.optimizers.Adam(learning_rate=3e-4),
-                  target_update_tau=0.005,
-                  target_update_period=1,
-                  td_errors_loss_fn=tf.math.squared_difference,
+                  actor_optimizer=tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate),
+                  critic_optimizer=tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate),
+                  ou_stddev=0.1,
+                  target_update_tau=0.7,
+                  target_update_period=2,
+                  #td_errors_loss_fn=common.element_wise_squared_loss,
                   gamma=0.99,
-                  reward_scale_factor=1.0,
                   train_step_counter=global_step)
 
 agent.initialize()
@@ -199,7 +199,7 @@ for epoch in range(epochs+1):
     avg_rewards = np.concatenate((avg_rewards, [[epoch, avg_rew]]), axis=0)
     data_plotter.update_eval_reward(avg_rew, eval_interval)
 
-data_plotter.plot_evaluation_rewards(avg_rewards)
+data_plotter.plot_evaluation_rewards(avg_rewards, save_path)
 
 # Restoring a checkpoint
 #train_checkpointer.initialize_or_restore()

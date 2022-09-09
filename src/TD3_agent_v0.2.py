@@ -14,12 +14,12 @@ import datetime
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from lib.customEnvironment import DroneEnvironment
+from lib.customEnvironment_v0_3 import DroneEnvironment
 from lib.plotters import Plotter
 from tf_agents.environments import tf_py_environment
 from tf_agents.trajectories import time_step as ts
 from tf_agents.specs import array_spec
-from tf_agents.agents import SacAgent
+from tf_agents.agents import Td3Agent
 from tf_agents.utils import common
 from tf_agents.policies import policy_saver
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
@@ -53,7 +53,7 @@ fc_layer_params = (64, 64,)
 train_env_steps_limit = 100 # maximum number of steps in the TimeLimit of the training environment
 collect_steps_per_iteration = 100 # maximum number of steps in each episode
 
-epochs = 150
+epochs = 200
 batch_size = 128
 learning_rate = 1e-3
 checkpoint_dir = save_path + '/ckpts'
@@ -92,18 +92,15 @@ global_step = tf.compat.v1.train.get_or_create_global_step()
 actor_net = ActorNetwork(tf_env.observation_spec(), tf_env.action_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
 critic_net = CriticNetwork((tf_env.observation_spec(), tf_env.action_spec()), joint_fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
 # Td3 agent ###ADD ALL THE OTHER NETWORKS AND ADDRESS THE PARAMETERS
-agent = SacAgent(tf_env.time_step_spec(),
+agent = Td3Agent(tf_env.time_step_spec(),
                   tf_env.action_spec(),
                   actor_network=actor_net,
                   critic_network=critic_net,
                   actor_optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
                   critic_optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-                  alpha_optimizer=tf.keras.optimizers.Adam(learning_rate=3e-4),
-                  target_update_tau=0.005,
-                  target_update_period=1,
-                  td_errors_loss_fn=tf.math.squared_difference,
+                  target_update_tau=1.0,
+                  target_update_period=2,
                   gamma=0.99,
-                  reward_scale_factor=1.0,
                   train_step_counter=global_step)
 
 agent.initialize()
