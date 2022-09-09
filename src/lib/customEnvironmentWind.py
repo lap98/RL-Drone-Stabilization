@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from tf_agents.environments import py_environment
 from tf_agents.trajectories import time_step as ts
 from tf_agents.specs import array_spec
+import random
 
 
 #################################################
@@ -67,7 +68,7 @@ class DroneEnvironmentWind(py_environment.PyEnvironment):
   def _reset(self):
     print('Total reward for the episode before:', self._total_reward)
     self._total_reward = 0
-    self.setRandomWind()
+    self.setRandomWind(20)
     self.reset_pose()
 
     self._state = self.getState()
@@ -164,9 +165,21 @@ class DroneEnvironmentWind(py_environment.PyEnvironment):
     
     return reward
 
-  def setRandomWind(self):
-    x_val = 30
-    y_val = 0
-    z_val = 0
+  def setRandomWind(self,max_wind):
+    x_val = max_wind * random.uniform(0, 1) * self.binaryDirection()
+    y_val = max_wind * random.uniform(0, 1) * self.binaryDirection()
+    z_val = max_wind * random.uniform(0, 1) * self.binaryDirection()
     wind = airsim.Vector3r(x_val, y_val, z_val)
+    print('_______________________________________________________________________________________\n')
+    print("wind: \n")
+    print(x_val)
+    print(y_val)
+    print(z_val)
+    print('_______________________________________________________________________________________\n')
     self.client.simSetWind(wind)
+
+  # Return -1 or +1
+  def binaryDirection(self):
+    if(random.uniform(0, 1) >= 0.5):
+      return 1
+    return -1

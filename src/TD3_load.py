@@ -14,7 +14,7 @@ import datetime
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from lib.customEnvironmentWind import DroneEnvironmentWind
+from lib.customEnvironment import DroneEnvironment
 from tf_agents.environments import tf_py_environment
 from tf_agents.trajectories import time_step as ts
 from tf_agents.specs import array_spec
@@ -39,7 +39,7 @@ tf.random.set_seed(12345)
 
 # https://www.tensorflow.org/agents/tutorials/10_checkpointer_policysaver_tutorial?hl=en
 
-save_path = os.getcwd() + '/training_data_wind/' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+save_path = os.getcwd() + '/training_data/' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # Data collection
 replay_buffer_capacity = 1000000
@@ -49,10 +49,10 @@ initial_collect_steps = 1000 # total number of steps collected with a random pol
 fc_layer_params = (64, 64,)
 
 # Training
-train_env_steps_limit = 150 # maximum number of steps in the TimeLimit of the training environment
+train_env_steps_limit = 1500 # maximum number of steps in the TimeLimit of the training environment
 collect_steps_per_iteration = 150 # maximum number of steps in each episode
 
-epochs = 3000
+epochs = 1500
 batch_size = 128
 learning_rate = 1e-3
 checkpoint_dir = save_path + '/ckpts'
@@ -69,8 +69,8 @@ eval_interval = 50 # interval for evaluation and policy saving, =epochs for eval
 # Environments instantiation
 #################################################
 
-tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironmentWind(), duration=train_env_steps_limit)) # set limit to 100 steps in the environment
-eval_tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironmentWind(), duration=eval_env_steps_limit)) # 1000 steps duration
+tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(), duration=train_env_steps_limit)) # set limit to 100 steps in the environment
+eval_tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(), duration=eval_env_steps_limit)) # 1000 steps duration
 # Environment testing code
 #environment = DroneEnvironment()
 #action = np.array([0.5,0.3,0.1,0.7], dtype=np.float32)
@@ -110,6 +110,10 @@ agent.initialize()
 # Random Policy
 #################################################
 
+policy_path = os.getcwd() +'/training_data/20220908_174723/policies'
+
+saved_policy = tf.compat.v2.saved_model.load(policy_path)
+
 tf_policy = random_tf_policy.RandomTFPolicy(action_spec=tf_env.action_spec(), time_step_spec=tf_env.time_step_spec())
 # Policy testing code
 #observation = tf.ones(tf_env.time_step_spec().observation.shape)
@@ -139,7 +143,7 @@ print('Collecting initial data')
 collect_driver.run()
 print('Data collection executed')
 
-train_driver = dynamic_step_driver.DynamicStepDriver(tf_env, agent.collect_policy, observers=observers, num_steps=collect_steps_per_iteration) # instead of tf_policy use the agent.collect_policy, which is the OUNoisePolicy
+train_driver = dynamic_step_driver.DynamicStepDriver(tf_env, saved_policy, observers=observers, num_steps=collect_steps_per_iteration) # instead of tf_policy use the agent.collect_policy, which is the OUNoisePolicy
 
 # Transform Replay Buffer to Dataset
 dataset = replay_buffer.as_dataset(num_parallel_calls=3, sample_batch_size=batch_size, num_steps=2).prefetch(3) # read batches of 32 elements, each with 2 timesteps
