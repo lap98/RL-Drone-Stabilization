@@ -85,7 +85,7 @@ class DroneEnvironment(py_environment.PyEnvironment):
 
     #self.client.simSetObjectPose(object_name="SimpleFlight", pose=new_pose, teleport=False)
     self.client.simSetVehiclePose(pose=new_pose, ignore_collision=False, vehicle_name="SimpleFlight")
-    if self.client.getMultirotorState().landed_state == airsim.LandedState.Landed: print("LANDED: Physics Engine NOT Engaged")
+    if self.client.getMultirotorState().landed_state == airsim.LandedState.Landed: print("[LANDED: Physics Engine NOT Engaged]")
     else: print("[CORRECTLY FLYING: Physics Engine Engaged]")
     time.sleep(0.5) # needed because otherwise, the neural net is too fast and the _steps begin too soon, when the drone is not ready, and no experience would be gained (rew=0)
   
