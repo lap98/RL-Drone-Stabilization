@@ -55,15 +55,19 @@ class DroneEnvironment(py_environment.PyEnvironment):
 
   '''Generates a new pose, randomized or not
   '''
-  def getNewPose(self, random=False):
-    pos_stddev = 1
-    #or_stddev = 0.1
+  def getNewPose(self, random=False, random_uniform=False):
+    pos_stddev = 0.5 # in [m]
+    or_stddev = 0.15 # in [rad], 0.15 -> at most around 20 deg of inclination
     if random:
-      u = np.random.uniform()
-      v = np.random.uniform()
-      w = np.random.uniform()
-      new_pose = airsim.Pose(position_val=airsim.Vector3r(0.0 + np.random.normal(0, pos_stddev), 0.0 + np.random.normal(0, pos_stddev), -100.0 + np.random.normal(0, pos_stddev)),
-                              orientation_val=airsim.Quaternionr(np.sqrt(1-u)*np.sin(2*np.pi*v), np.sqrt(1-u)*np.cos(2*np.pi*v), np.sqrt(u)*np.sin(2*np.pi*w), np.sqrt(u)*np.cos(2*np.pi*w)))
+      if random_uniform:
+        u = np.random.uniform()
+        v = np.random.uniform()
+        w = np.random.uniform()
+        new_pose = airsim.Pose(position_val=airsim.Vector3r(0.0 + np.random.normal(0, pos_stddev), 0.0 + np.random.normal(0, pos_stddev), -100.0 + np.random.normal(0, pos_stddev)),
+                                orientation_val=airsim.Quaternionr(np.sqrt(1-u)*np.sin(2*np.pi*v), np.sqrt(1-u)*np.cos(2*np.pi*v), np.sqrt(u)*np.sin(2*np.pi*w), np.sqrt(u)*np.cos(2*np.pi*w)))
+      else:
+        new_pose = airsim.Pose(position_val=airsim.Vector3r(0.0 + np.random.normal(0, pos_stddev), 0.0 + np.random.normal(0, pos_stddev), -100.0 + np.random.normal(0, pos_stddev)),
+                                orientation_val=airsim.utils.to_quaternion(np.random.normal(0, or_stddev), np.random.normal(0, or_stddev), np.random.normal(0, or_stddev))) # roll pitch yaw in radians, to quaternion
     else:
       new_pose = airsim.Pose(position_val=airsim.Vector3r(0.0, 0.0, -100.0), orientation_val=airsim.Quaternionr(0.0, 0.0, 0.0, 1.0))
     reference_pose = airsim.Pose(position_val=airsim.Vector3r(0.0, 0.0, -100.0), orientation_val=airsim.Quaternionr(0.0, 0.0, 0.0, 1.0))
@@ -183,27 +187,27 @@ class DroneEnvironment(py_environment.PyEnvironment):
     #scaled_loss = np.log(1.5+loss) # apply logarithmic scaling to have values around 0.4-2.6 not changing too much
     #reward = -loss
     reward = 0
-    #if abs(pose.position.x_val-self.initial_pose.position.x_val) < 0.5: reward += 2
-    #elif abs(pose.position.x_val-self.initial_pose.position.x_val) < 1: reward += 1
-    #if abs(pose.position.y_val-self.initial_pose.position.y_val) < 0.5: reward += 2
-    #elif abs(pose.position.y_val-self.initial_pose.position.y_val) < 1: reward += 1
-    #if abs(pose.position.z_val-self.initial_pose.position.z_val) < 0.5: reward += 2
-    #elif abs(pose.position.z_val-self.initial_pose.position.z_val) < 1: reward += 1
+    if abs(pose.position.x_val-self.initial_pose.position.x_val) < 0.5: reward += 2
+    elif abs(pose.position.x_val-self.initial_pose.position.x_val) < 1: reward += 1
+    if abs(pose.position.y_val-self.initial_pose.position.y_val) < 0.5: reward += 2
+    elif abs(pose.position.y_val-self.initial_pose.position.y_val) < 1: reward += 1
+    if abs(pose.position.z_val-self.initial_pose.position.z_val) < 0.5: reward += 2
+    elif abs(pose.position.z_val-self.initial_pose.position.z_val) < 1: reward += 1
 
-    if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 0.1 ): reward = reward + 100
-    if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 0.1 ): reward = reward + 100
-    if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 0.1 ): reward = reward + 100
-    if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 0.5 ): reward = reward + 20
-    if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 0.5 ): reward = reward + 20
-    if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 0.5 ): reward = reward + 20
-    if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 1 ): reward = reward + 10
-    if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 1 ): reward = reward + 10
-    if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 1 ): reward = reward + 10
-    if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 2 ): reward = reward + 5
-    if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 2 ): reward = reward + 5
-    if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 2 ): reward = reward + 5
-    if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 3 ): reward = reward + 1
-    if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 3 ): reward = reward + 1
-    if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 3 ): reward = reward + 1
+    #if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 0.1 ): reward = reward + 100
+    #if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 0.1 ): reward = reward + 100
+    #if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 0.1 ): reward = reward + 100
+    #if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 0.5 ): reward = reward + 20
+    #if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 0.5 ): reward = reward + 20
+    #if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 0.5 ): reward = reward + 20
+    #if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 1 ): reward = reward + 10
+    #if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 1 ): reward = reward + 10
+    #if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 1 ): reward = reward + 10
+    #if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 2 ): reward = reward + 5
+    #if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 2 ): reward = reward + 5
+    #if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 2 ): reward = reward + 5
+    #if(abs(pose.position.x_val-self.initial_pose.position.x_val) < 3 ): reward = reward + 1
+    #if(abs(pose.position.y_val-self.initial_pose.position.y_val) < 3 ): reward = reward + 1
+    #if(abs(pose.position.z_val-self.initial_pose.position.z_val) < 3 ): reward = reward + 1
 
     return reward
