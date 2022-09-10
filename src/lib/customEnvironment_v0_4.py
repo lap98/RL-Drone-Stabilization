@@ -87,7 +87,7 @@ class DroneEnvironment(py_environment.PyEnvironment):
     self.client.simSetVehiclePose(pose=new_pose, ignore_collision=False, vehicle_name="SimpleFlight")
     if self.client.getMultirotorState().landed_state == airsim.LandedState.Landed: print("[LANDED: Physics Engine NOT Engaged]")
     else: print("[CORRECTLY FLYING: Physics Engine Engaged]")
-    time.sleep(0.05) # needed because otherwise, the neural net is too fast and the _steps begin too soon, when the drone is not ready, and no experience would be gained (rew=0)
+    time.sleep(0.01) # needed because otherwise, the neural net is too fast and the _steps begin too soon, when the drone is not ready, and no experience would be gained (rew=0)
   
   '''Sets a random wind in the simulation, with the given standard deviation in [m]
   '''
