@@ -10,13 +10,12 @@ from lib.plotters import Plotter
 from lib.customEnvironment_v0_8 import DroneEnvironment
 from tf_agents.environments import tf_py_environment
 from tf_agents.environments import TimeLimit
-from tf_agents.policies import random_tf_policy
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.drivers import dynamic_step_driver
 from tf_agents.metrics import tf_metrics
-from tf_agents.agents.ddpg.actor_network import ActorNetwork
-from tf_agents.agents.ddpg.critic_network import CriticNetwork
-from tf_agents.agents import Td3Agent
+from tf_agents.networks.actor_distribution_network import ActorDistributionNetwork
+from tf_agents.networks.value_network import ValueNetwork
+from tf_agents.agents import PPOAgent
 from tf_agents.policies import policy_saver
 from tf_agents.utils import common
 
@@ -30,12 +29,13 @@ tf.random.set_seed(12345)
 
 save_path = 'C:/Users/aless/Downloads/Uni/Advanced_Deep_Learning_Models_and_Methods/Project/python_code/training_data/' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
+# PPO is an on-policy algorithm, so maybe lower the initial data collection?
 # Data collection
 replay_buffer_capacity = 1000000
-initial_collect_steps = 5000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
+initial_collect_steps = 1000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
 
 # Agent
-fc_layer_params = (128, 128,)
+fc_layer_params = (64, 64,)
 
 # Training
 train_env_steps_limit = 200 # maximum number of steps in the TimeLimit of the training environment
@@ -58,30 +58,27 @@ eval_interval = 50 # interval for evaluation and policy saving, =epochs for eval
 # Environments instantiation
 #################################################
 
-tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(False, False), duration=train_env_steps_limit)) # set limit to n steps in the environment
-eval_tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(False, False), duration=eval_env_steps_limit)) # set limit to m steps in the environment
+tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(), duration=train_env_steps_limit)) # set limit to 100 steps in the environment
+eval_tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(), duration=eval_env_steps_limit)) # 1000 steps duration
 
 
 #################################################
 # Agent
 #################################################
 
-global_step = tf.compat.v1.train.get_or_create_global_step() # global counter of the steps
+global_step = tf.compat.v1.train.get_or_create_global_step()
 
-actor_net = ActorNetwork(tf_env.observation_spec(), tf_env.action_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
-critic_net = CriticNetwork((tf_env.observation_spec(), tf_env.action_spec()), joint_fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.relu)
+act_net = ActorDistributionNetwork(tf_env.observation_spec(), tf_env.action_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
+val_net = ValueNetwork(tf_env.observation_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
 
-agent = Td3Agent(tf_env.time_step_spec(),
-                  tf_env.action_spec(),
-                  actor_network=actor_net,
-                  critic_network=critic_net,
-                  actor_optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-                  critic_optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-                  target_update_tau=1.0,
-                  target_update_period=2,
-                  gamma=0.99,
-                  train_step_counter=global_step)
-
+agent = PPOAgent(tf_env.time_step_spec(),
+                 tf_env.action_spec(),
+                 actor_net=act_net,
+                 value_net=val_net,
+                 optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate),
+                 discount_factor=0.99,
+                 num_epochs=1,
+                 train_step_counter=global_step)
 agent.initialize()
 
 
@@ -89,17 +86,16 @@ agent.initialize()
 # Replay Buffer & Collect Driver
 #################################################
 
-# Initial collect policy - random
-tf_policy = random_tf_policy.RandomTFPolicy(action_spec=tf_env.action_spec(), time_step_spec=tf_env.time_step_spec())
+# PPO is an on-policy algorithm, so it makes sense to collect only on-policy data
 
 # Create the replay buffer
 replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(data_spec=agent.collect_data_spec, batch_size=tf_env.batch_size, max_length=replay_buffer_capacity)
 
-# Create the initial and training collect drivers
+# Create the collect driver
 num_episodes = tf_metrics.NumberOfEpisodes()
 env_steps = tf_metrics.EnvironmentSteps()
 observers = [replay_buffer.add_batch, num_episodes, env_steps]
-collect_driver = dynamic_step_driver.DynamicStepDriver(tf_env, tf_policy, observers=observers, num_steps=initial_collect_steps) # use tf_policy, which is random
+collect_driver = dynamic_step_driver.DynamicStepDriver(tf_env, agent.collect_policy, observers=observers, num_steps=initial_collect_steps) # use tf_policy, which is random
 
 train_driver = dynamic_step_driver.DynamicStepDriver(tf_env, agent.collect_policy, observers=observers, num_steps=collect_steps_per_iteration) # instead of tf_policy use the agent.collect_policy, which is the OUNoisePolicy
 
