@@ -2,6 +2,7 @@
 # Imports
 #################################################
 
+import os
 import time
 import airsim
 import numpy as np
@@ -19,10 +20,15 @@ class DroneEnvironment(py_environment.PyEnvironment):
   '''Initializes the environment, connecting to the drone and setting the observation and action spaces
   :param enable_wind: whether to enable the wind
   :param randomize_initial_pose: whether to randomize the initial position and orientation of the drone
+  :param save_path: the path of the data saving folder:
+                      If present, the software saves all the states of the drone, for later analysis
+                      If None, nothing is saved
   '''
-  def __init__(self, enable_wind=False, randomize_initial_pose=False):
+  def __init__(self, enable_wind=False, randomize_initial_pose=False, save_path=None):
     self.enable_wind = enable_wind
     self.randomize_initial_pose = randomize_initial_pose
+    self.save_path = save_path
+    self._states_arr = None
 
     self.client = airsim.MultirotorClient()
     self.client.confirmConnection()
@@ -30,7 +36,6 @@ class DroneEnvironment(py_environment.PyEnvironment):
     self.client.armDisarm(True)
     
     self._observation_spec = array_spec.ArraySpec(shape=(19,),dtype=np.float32, name='observation') # Observation (drone state) space
-    
     self._action_spec = array_spec.BoundedArraySpec(shape=(4,), dtype=np.float32, name='action', minimum=0.0, maximum=1.0) # Action space: control motors power
     
     #self._state, _, _, _, _, _, _ = self.getState()
@@ -97,8 +102,13 @@ class DroneEnvironment(py_environment.PyEnvironment):
     print('Total reward for the previous episode:', self._total_reward)
     self._total_reward = 0
     self._steps = 0
+    if self.save_path is not None: # saves states of the drone for later analysis
+      if self._states_arr is not None:
+        if not os.path.exists(self.save_path+'/states'): os.makedirs(self.save_path+'/states')
+        np.save(self.save_path+'/states/'+str(time.time()), self._states_arr)
+      self._states_arr = np.empty((0,19))
+
     if self.enable_wind: self.setRandomWind()
-    
     self.reset_pose()
 
     self._state, _, _, _, _, _, _ = self.getState()
@@ -146,6 +156,7 @@ class DroneEnvironment(py_environment.PyEnvironment):
     # Perform the chosen move (if collision occurs, it returns True), get new state, compute reward
     end_now = self.move(action=action)
     self._state, pos, orient, ang_acc, ang_vel, lin_acc, lin_vel = self.getState()
+    if self.save_path is not None: self._states_arr = np.concatenate((self._states_arr, [self._state]), axis=0) # save the states of the drone for later analysis
     reward = self.reward_function(pos, orient, ang_acc, ang_vel, lin_acc, lin_vel)
 
     # Handle states - step_type: 0->beginning, 1->normal transition, 2->terminal
