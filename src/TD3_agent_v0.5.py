@@ -162,6 +162,8 @@ for epoch in range(epochs+1):
     avg_rewards = np.concatenate((avg_rewards, [[epoch, avg_rew]]), axis=0)
     data_plotter.update_eval_reward(avg_rew, eval_interval)
 
+np.save(save_path+'/avg_rewards.npy', avg_rewards)
+
 data_plotter.plot_evaluation_rewards(avg_rewards, save_path)
 
 # Restoring a checkpoint
