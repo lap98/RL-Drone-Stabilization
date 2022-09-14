@@ -11,7 +11,8 @@ from lib.plotters import Plotter
 from lib.customEnvironment_v0_8 import DroneEnvironment
 from tf_agents.environments import tf_py_environment
 from tf_agents.environments import TimeLimit
-import airsim
+import airsim   
+import PySimpleGUI as sg      
 
 np.random.seed(1234)
 tf.random.set_seed(12345)
@@ -54,10 +55,24 @@ saved_policy = tf.compat.v2.saved_model.load(policy_path)
 
 #data_plotter = Plotter()
 
-def get_wind_vector():
-  return airsim.Vector3r(100,10,10)
+def get_wind_vector(window):
+  event, values = window.read(timeout=0)
+  print(event, values)
+  if event == sg.WIN_CLOSED or event == 'Exit':
+    window.close()
+  window['-XLEFT-'].update(int(values['-XSLIDER-']))
+  window['-XRIGHT-'].update(int(values['-XSLIDER-']))
+  window['-YLEFT-'].update(int(values['-YSLIDER-']))
+  window['-YRIGHT-'].update(int(values['-YSLIDER-']))
+  window['-ZLEFT-'].update(int(values['-ZSLIDER-']))
+  window['-ZRIGHT-'].update(int(values['-ZSLIDER-']))
+  if event == 'Show':
+      sg.popup(f'The slider value = {values["-SLIDER-"]}')
+  return airsim.Vector3r(values["-XSLIDER-"],values["-YSLIDER-"],values["-ZSLIDER-"])
 
-def evaluate_agent(policy, eval_tf_env, num_eval_episodes):
+
+
+def evaluate_agent(window, policy, eval_tf_env, num_eval_episodes):
   print('\nEVALUATING *******\n')
   total_reward = 0
   for idx in range(num_eval_episodes):
@@ -66,7 +81,7 @@ def evaluate_agent(policy, eval_tf_env, num_eval_episodes):
     time_step = eval_tf_env.reset()
     while not time_step.is_last():
       action_step = policy.action(time_step)
-      airsim.MultirotorClient().simSetWind(get_wind_vector())
+      airsim.MultirotorClient().simSetWind(get_wind_vector(window))
       time_step = eval_tf_env.step(action_step.action)
       total_reward += float(time_step.reward)
     end = time.time()
@@ -74,9 +89,38 @@ def evaluate_agent(policy, eval_tf_env, num_eval_episodes):
   print('\n******* EVALUATION ENDED\n')
   return total_reward / num_eval_episodes # avg reward per episode
 
+#################################################
+# Window
+#################################################
+# Define the window's contents
+
+layout = [[sg.Text('Wind component along the X axis')],
+          [sg.T('0',size=(4,1), key='-XLEFT-'),
+           sg.Slider((-50,50),default_value=0, key='-XSLIDER-', orientation='h', enable_events=True, disable_number_display=True),
+           sg.T('0', size=(4,1), key='-XRIGHT-')],
+          [sg.Text('Wind component along the Y axis')],
+          [sg.T('0',size=(4,1), key='-YLEFT-'),
+           sg.Slider((-50,50),default_value=0, key='-YSLIDER-', orientation='h', enable_events=True, disable_number_display=True),
+           sg.T('0', size=(4,1), key='-YRIGHT-')],
+          [sg.Text('Wind component along the Z axis')],
+          [sg.T('0',size=(4,1), key='-ZLEFT-'),
+           sg.Slider((-50,50),default_value=0, key='-ZSLIDER-', orientation='h', enable_events=True, disable_number_display=True),
+           sg.T('0', size=(4,1), key='-ZRIGHT-')],
+          [ sg.Button('Exit')]]
+
+# Create the window
+window = sg.Window('Window Title', layout)
 avg_rewards = np.empty((0,2))
-avg_rew = evaluate_agent(saved_policy, eval_tf_env, num_eval_episodes)
+
+
+#################################################
+# TEvaluation
+#################################################
+avg_rew = evaluate_agent(window,saved_policy, eval_tf_env, num_eval_episodes)
 #avg_rewards = np.concatenate((avg_rewards, [[epoch, avg_rew]]), axis=0)
 #data_plotter.update_eval_reward(avg_rew, eval_interval)
 #np.save(save_path+'/avg_rewards.npy', avg_rewards)
 #data_plotter.plot_evaluation_rewards(avg_rewards, save_path)
+
+# Finish up by removing from the screen
+window.close()         
