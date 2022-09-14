@@ -46,7 +46,7 @@ global_step = tf.compat.v1.train.get_or_create_global_step() # global counter of
 # Load policy
 #################################################
 
-policy_path = os.getcwd() +'/training_data/policies'
+policy_path = os.getcwd() +'/working/working_td3_2/20220911_185243/policies'
 saved_policy = tf.compat.v2.saved_model.load(policy_path)
 
 #################################################

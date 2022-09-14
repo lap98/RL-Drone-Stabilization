@@ -2,6 +2,7 @@
 # Imports
 #################################################
 
+import os
 import time
 import datetime
 import numpy as np
@@ -28,11 +29,10 @@ tf.random.set_seed(12345)
 # Reinforcement Learning parameters
 #################################################
 
-save_path = 'C:/Users/aless/Downloads/Uni/Advanced_Deep_Learning_Models_and_Methods/Project/python_code/training_data/' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-
+save_path = os.getcwd() + '/training_data'
 # Data collection
 replay_buffer_capacity = 1000000
-initial_collect_steps = 5000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
+initial_collect_steps = 500 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
 
 # Agent
 fc_layer_params = (128, 128,)
