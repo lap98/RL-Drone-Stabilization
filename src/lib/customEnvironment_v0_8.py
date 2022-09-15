@@ -199,6 +199,6 @@ class DroneEnvironment(py_environment.PyEnvironment):
     reward -= 0.1 * np.sqrt(ang_vel.x_val**2 + ang_vel.y_val**2 + ang_vel.z_val**2)
 
     self._steps += 1
-    if self._steps % 10 == 0: print('Position of drone: <', pos.x_val, pos.y_val, pos.z_val, '>')
+    #if self._steps % 10 == 0: print('Position of drone: <', pos.x_val, pos.y_val, pos.z_val, '>')
 
     return reward
