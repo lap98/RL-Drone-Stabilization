@@ -68,18 +68,32 @@ eval_tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(), du
 
 global_step = tf.compat.v1.train.get_or_create_global_step()
 
-act_net = ActorDistributionNetwork(tf_env.observation_spec(), tf_env.action_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
-val_net = ValueNetwork(tf_env.observation_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
+actor_net = ActorDistributionNetwork(tf_env.observation_spec(), tf_env.action_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
+value_net = ValueNetwork(tf_env.observation_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
 
 agent = PPOAgent(tf_env.time_step_spec(),
                  tf_env.action_spec(),
-                 actor_net=act_net,
-                 value_net=val_net,
+                 actor_net=actor_net,
+                 value_net=value_net,
                  optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate),
                  discount_factor=0.99,
                  num_epochs=1,
                  train_step_counter=global_step)
 agent.initialize()
+
+print("Actor network summary and details")
+print(actor_net.summary())
+for i, layer in enumerate (actor_net.layers):
+    print (i, layer)
+    try: print ("    ",layer.activation)
+    except AttributeError: print('   no activation attribute')
+
+print("Critic network summary and details")
+print(value_net.summary())
+for i, layer in enumerate (value_net.layers):
+    print (i, layer)
+    try: print ("    ",layer.activation)
+    except AttributeError: print('   no activation attribute')
 
 
 #################################################

@@ -35,7 +35,7 @@ replay_buffer_capacity = 1000000
 initial_collect_steps = 5000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
 
 # Agent
-fc_layer_params = (256, 256,)
+fc_layer_params = (512, 512,)
 
 # Training
 train_env_steps_limit = 200 # maximum number of steps in the TimeLimit of the training environment
@@ -43,7 +43,7 @@ collect_steps_per_iteration = 200 # maximum number of steps in each episode
 
 epochs = 3000
 batch_size = 512
-learning_rate = 3e-4
+learning_rate = 1e-3
 checkpoint_dir = save_path + '/ckpts'
 policy_dir = save_path + '/policies'
 ckpts_interval = 10 # every how many epochs to store a checkpoint during training
@@ -83,6 +83,20 @@ agent = Td3Agent(tf_env.time_step_spec(),
                   train_step_counter=global_step)
 
 agent.initialize()
+
+print("Actor network summary and details")
+print(actor_net.summary())
+for i, layer in enumerate (actor_net.layers):
+    print (i, layer)
+    try: print ("    ",layer.activation)
+    except AttributeError: print('   no activation attribute')
+
+print("Critic network summary and details")
+print(critic_net.summary())
+for i, layer in enumerate (critic_net.layers):
+    print (i, layer)
+    try: print ("    ",layer.activation)
+    except AttributeError: print('   no activation attribute')
 
 
 #################################################

@@ -85,6 +85,20 @@ agent = DdpgAgent(tf_env.time_step_spec(),
 
 agent.initialize()
 
+print("Actor network summary and details")
+print(actor_net.summary())
+for i, layer in enumerate (actor_net.layers):
+    print (i, layer)
+    try: print ("    ",layer.activation)
+    except AttributeError: print('   no activation attribute')
+
+print("Critic network summary and details")
+print(critic_net.summary())
+for i, layer in enumerate (critic_net.layers):
+    print (i, layer)
+    try: print ("    ",layer.activation)
+    except AttributeError: print('   no activation attribute')
+
 
 #################################################
 # Replay Buffer & Collect Driver
