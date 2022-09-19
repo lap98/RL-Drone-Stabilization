@@ -1,17 +1,34 @@
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-agent			folder			train_policy	epochs	train_BS	learn_rate	eval_reward	eval_timesteps	train_timesteps	NN_arch			state			reward									randomization
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+agent			folder			train_policy	epochs	train_BS	learn_rate	eval_reward	eval_timesteps	train_timesteps	NN_arch			state			reward									randomization											working propellers
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-GA_agent_v0.1		20220913_143534	-			100		-		-			137 (max)		200			200				[64,] ["relu"]		19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)
+GA_agent_v0.1		20220913_143534	-			100		-		-			137 (max)		200			200				[64,] ["relu"]		19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)		all
 
-TD3_agent_v0.6		20220913_163339	collect_policy	3000		512		3e-4			0max/-50asympt	400			200				(32,32)tanh/relu	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)
+TD3_agent_v0.6		20220913_163339	collect_policy	3000		512		3e-4			0max/-50asympt	400			200				(32,32)tanh/relu	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)		all
 -> does not stabilize
 
-TD3_agent_v0.6		20220913_204139	collect_policy	3000		512		3e-4			25max/-75asymp	400			200				(64,64)tanh/relu	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)
+TD3_agent_v0.6		20220913_204139	collect_policy	3000		512		3e-4			25max/-75asymp	400			200				(64,64)tanh/relu	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)		all
 -> does not stabilize
 
-TD3_agent_v0.6		20220914_193928	collect_policy	3000		512		3e-4			35max/0asymp	400			200				(128,128)tanh/relu	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)
+TD3_agent_v0.6		20220914_193928	collect_policy	3000		512		3e-4			35max/0asymp	400			200				(128,128)tanh/relu	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)		all
 -> stabilizes
 
-TD3_agent_v0.6		20220915_094112	collect_policy	3000		512		3e-4			15max/15asymp	400			200				(256,256)tanh/relu	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)
+TD3_agent_v0.6		20220915_094112	collect_policy	3000		512		3e-4			15max/15asymp	400			200				(256,256)tanh/relu	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)		all
 -> was still growing the reward
+
+TD3_agent_v0.6		20220916_214005	collect_policy	3000		512		3e-4			0max/-500asymp	400			200				(512,512)tanh/relu	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)		all
+-> does not stabilize
+
+TD3_agent_v0.6		20220917_110934	collect_policy	3000		512		1e-3			0max/-1700asy	400			200				(512,512)tanh/relu	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)		all
+-> does not stabilize
+
+TD3_agent_v0.7		20220918_172450	collect_policy	3000		512		3e-4			270max/270asy	400			200				(4x128res,)sigm/rel	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)		all
+-> PERFECTLY stabilizes the drone???
+
+TD3_agent_v0.7		20220918_231523	collect_policy	3000		512		3e-4			-6e9max/-6e9asy400			200				(4x128res,)sigm/rel	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		no pos randomization(0.5), no orientation randomness (0.3)		front_right set to 0
+-> keeps spinning, without all the propellers does not work
+
+TD3_agent_v0.7		20220919_111221	collect_policy	3000		512		3e-4			-100max/-120asy400			200				(4x128res,)sigm/rel	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		yes pos randomization(0.5), yes orientation randomness (0.3)	all
+-> learned only if the environment does not randomize the pose: only with pose randomization off in evaluation
+
+TD3_agent_v0.6		-				collect_policy	3000		512		3e-4			35max/0asymp	400			200				(128,128)tanh/relu	19 var multirotor	max(0, 1-||x-x'||) - 0.1||w|| - 0.1||theta||		yes pos randomization(0.5), yes orientation randomness (0.3)	all
