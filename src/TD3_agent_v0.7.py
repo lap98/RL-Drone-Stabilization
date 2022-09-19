@@ -62,8 +62,8 @@ eval_interval = 50 # interval for evaluation and policy saving, =epochs for eval
 # Environments instantiation
 #################################################
 
-tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(False, False), duration=train_env_steps_limit)) # set limit to n steps in the environment
-eval_tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(False, False, save_path), duration=eval_env_steps_limit)) # set limit to m steps in the environment
+tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(False, True), duration=train_env_steps_limit)) # set limit to n steps in the environment
+eval_tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(False, True, save_path), duration=eval_env_steps_limit)) # set limit to m steps in the environment
 
 
 #################################################

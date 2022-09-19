@@ -133,6 +133,8 @@ class DroneEnvironment(py_environment.PyEnvironment):
       d_th = scale * (action-0.5) / 5 # delta thrust on the rotors
       th = np.clip(b_th + d_th, 0, 1) # thrust bias + delta, clipped
       self.client.moveByMotorPWMsAsync(front_right_pwm=float(th[0]), rear_left_pwm=float(th[1]), front_left_pwm=float(th[2]), rear_right_pwm=float(th[3]), duration=duration)
+      #th=action
+      #self.client.moveByMotorPWMsAsync(front_right_pwm=0.0, rear_left_pwm=float(th[1]), front_left_pwm=float(th[2]), rear_right_pwm=float(th[3]), duration=duration)
       time.sleep(0.002)
 
     else: # discrete movements -> the control loop is: network inference -> perform action and join -> ...
