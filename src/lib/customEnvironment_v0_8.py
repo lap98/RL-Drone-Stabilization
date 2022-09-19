@@ -24,13 +24,14 @@ class DroneEnvironment(py_environment.PyEnvironment):
                       If present, the software saves all the states of the drone, for later analysis
                       If None, nothing is saved
   '''
-  def __init__(self, enable_wind=False, randomize_initial_pose=False, save_path=None):
+  def __init__(self, enable_wind=False, randomize_initial_pose=False, save_path=None, decrease_unreal_load=False):
     self.enable_wind = enable_wind
     self.randomize_initial_pose = randomize_initial_pose
     self.save_path = save_path
     self._states_arr = None
 
     self.client = airsim.MultirotorClient()
+    if decrease_unreal_load: self.client.simRunConsoleCommand("t.MaxFPS 5")
     self.client.confirmConnection()
     self.client.enableApiControl(True)
     self.client.armDisarm(True)
