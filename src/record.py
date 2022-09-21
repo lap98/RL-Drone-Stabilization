@@ -45,64 +45,30 @@ global_step = tf.compat.v1.train.get_or_create_global_step() # global counter of
 policies = os.getcwd() + '/training_data/data/policies'
 
 
-#################################################
-# Window
-#################################################
-
-layout = [[sg.Text('Wind component along the X axis')],
-          [sg.T('0',size=(4,1), key='-XLEFT-'),
-           sg.Slider((-50,50),default_value=0, key='-XSLIDER-', orientation='h', enable_events=True, disable_number_display=True),
-           sg.T('0', size=(4,1), key='-XRIGHT-')],
-          [sg.Text('Wind component along the Y axis')],
-          [sg.T('0',size=(4,1), key='-YLEFT-'),
-           sg.Slider((-50,50),default_value=0, key='-YSLIDER-', orientation='h', enable_events=True, disable_number_display=True),
-           sg.T('0', size=(4,1), key='-YRIGHT-')],
-          [sg.Text('Wind component along the Z axis')],
-          [sg.T('0',size=(4,1), key='-ZLEFT-'),
-           sg.Slider((-50,50),default_value=0, key='-ZSLIDER-', orientation='h', enable_events=True, disable_number_display=True),
-           sg.T('0', size=(4,1), key='-ZRIGHT-')],
-          [ sg.Button('Exit')]]
-
-
-#################################################
-# Training and Evaluation functions
-#################################################
-
-#data_plotter = Plotter()
-
-def get_wind_vector(window):
-  event, values = window.read(timeout=0)
-  #print(event, values)
-  if event == sg.WIN_CLOSED or event == 'Exit':
-    window.close()
-  window['-XLEFT-'].update(int(values['-XSLIDER-']))
-  window['-XRIGHT-'].update(int(values['-XSLIDER-']))
-  window['-YLEFT-'].update(int(values['-YSLIDER-']))
-  window['-YRIGHT-'].update(int(values['-YSLIDER-']))
-  window['-ZLEFT-'].update(int(values['-ZSLIDER-']))
-  window['-ZRIGHT-'].update(int(values['-ZSLIDER-']))
-  if event == 'Show':
-      sg.popup(f'The slider value = {values["-SLIDER-"]}')
-  return airsim.Vector3r(values["-XSLIDER-"],values["-YSLIDER-"],values["-ZSLIDER-"])
+# data_plotter = Plotter()
 
 
 
 def evaluate_agent(window, policy, eval_tf_env, num_eval_episodes):
-  print('\nEVALUATING *******\n')
   total_reward = 0
   for idx in range(num_eval_episodes):
-    print('Evaluation iteration:', idx)
     start = time.time()
     time_step = eval_tf_env.reset()
     while not time_step.is_last():
       action_step = policy.action(time_step)
-      airsim.MultirotorClient().simSetWind(get_wind_vector(window))
+      # airsim.MultirotorClient().simSetWind(get_wind_vector(window))
       time_step = eval_tf_env.step(action_step.action)
       total_reward += float(time_step.reward)
     end = time.time()
-    print('Control loop timing for 1 timestep [s]:', (end-start)/eval_env_steps_limit)
-  print('\n******* EVALUATION ENDED\n')
   return total_reward / num_eval_episodes # avg reward per episode
+
+
+def display_info(window):
+  event, values = window.read(timeout=0)
+  if event == sg.WIN_CLOSED:
+      window.close()
+  window['-EPOCH-'].update(epoch)
+  window['-REWARD-'].update(avg_rew)
 
 
 #################################################
@@ -110,19 +76,9 @@ def evaluate_agent(window, policy, eval_tf_env, num_eval_episodes):
 #################################################
 # Define the window's contents
 
-layout = [[sg.Text('Wind component along the X axis')],
-          [sg.T('0',size=(4,1), key='-XLEFT-'),
-           sg.Slider((-50,50),default_value=0, key='-XSLIDER-', orientation='h', enable_events=True, disable_number_display=True),
-           sg.T('0', size=(4,1), key='-XRIGHT-')],
-          [sg.Text('Wind component along the Y axis')],
-          [sg.T('0',size=(4,1), key='-YLEFT-'),
-           sg.Slider((-50,50),default_value=0, key='-YSLIDER-', orientation='h', enable_events=True, disable_number_display=True),
-           sg.T('0', size=(4,1), key='-YRIGHT-')],
-          [sg.Text('Wind component along the Z axis')],
-          [sg.T('0',size=(4,1), key='-ZLEFT-'),
-           sg.Slider((-50,50),default_value=0, key='-ZSLIDER-', orientation='h', enable_events=True, disable_number_display=True),
-           sg.T('0', size=(4,1), key='-ZRIGHT-')],
-          [ sg.Button('Exit')]]
+layout = [[sg.Text("Epoch: ", key='-EPOCH-')],
+          [sg.Text("Reward: ", key='-REWARD-')]
+          ]
 
 # Create the window
 window = sg.Window('Window Title', layout)
@@ -132,12 +88,14 @@ avg_rewards = np.empty((0,2))
 #################################################
 # Load policies
 #################################################
-
+epoch = 0
+avg_rew = 0
 for policy in os.listdir(policies):
   print(policy)
+  #display_info(window)
   saved_policy = tf.compat.v2.saved_model.load(policies + '/' + policy)
   avg_rew = evaluate_agent(window,saved_policy, eval_tf_env, num_eval_episodes)
-
+  epoch = epoch + 50
 
 
 
@@ -145,7 +103,7 @@ for policy in os.listdir(policies):
 #################################################
 # TEvaluation
 #################################################
-avg_rew = evaluate_agent(window,saved_policy, eval_tf_env, num_eval_episodes)
+#avg_rew = evaluate_agent(window,saved_policy, eval_tf_env, num_eval_episodes)
 #avg_rewards = np.concatenate((avg_rewards, [[epoch, avg_rew]]), axis=0)
 #data_plotter.update_eval_reward(avg_rew, eval_interval)
 #np.save(save_path+'/avg_rewards.npy', avg_rewards)
