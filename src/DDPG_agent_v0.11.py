@@ -16,7 +16,7 @@ from tf_agents.drivers import dynamic_step_driver
 from tf_agents.metrics import tf_metrics
 from tf_agents.agents.ddpg.actor_network import ActorNetwork
 from tf_agents.agents.ddpg.critic_network import CriticNetwork
-from tf_agents.agents import Td3Agent
+from tf_agents.agents import DdpgAgent
 from tf_agents.policies import policy_saver
 from tf_agents.utils import common
 
@@ -71,13 +71,14 @@ global_step = tf.compat.v1.train.get_or_create_global_step() # global counter of
 actor_net = ActorNetwork(tf_env.observation_spec(), tf_env.action_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
 critic_net = CriticNetwork((tf_env.observation_spec(), tf_env.action_spec()), joint_fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.relu)
 
-agent = Td3Agent(tf_env.time_step_spec(),
+agent = DdpgAgent(tf_env.time_step_spec(),
                   tf_env.action_spec(),
                   actor_network=actor_net,
                   critic_network=critic_net,
                   actor_optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
                   critic_optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-                  target_update_tau=1.0,
+                  ou_stddev=0.1,
+                  target_update_tau=0.7,
                   target_update_period=2,
                   gamma=0.99,
                   train_step_counter=global_step)
