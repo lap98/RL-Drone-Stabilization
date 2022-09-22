@@ -32,18 +32,18 @@ save_path = 'C:/Users/aless/Downloads/Uni/Advanced_Deep_Learning_Models_and_Meth
 
 # Data collection
 replay_buffer_capacity = 1000000
-initial_collect_steps = 1000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
+initial_collect_steps = 5000 # total number of steps collected with a random policy. Every time the steps TimeLimit is reached, the environment is reset
 
 # Agent
-fc_layer_params = (64, 64,)
+fc_layer_params = (128, 128,)
 
 # Training
 train_env_steps_limit = 200 # maximum number of steps in the TimeLimit of the training environment
 collect_steps_per_iteration = 200 # maximum number of steps in each episode
 
-epochs = 4000
-batch_size = 128
-learning_rate = 1e-3
+epochs = 3000
+batch_size = 512
+learning_rate = 3e-4
 checkpoint_dir = save_path + '/ckpts'
 policy_dir = save_path + '/policies'
 ckpts_interval = 10 # every how many epochs to store a checkpoint during training
@@ -58,8 +58,8 @@ eval_interval = 50 # interval for evaluation and policy saving, =epochs for eval
 # Environments instantiation
 #################################################
 
-tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(), duration=train_env_steps_limit)) # set limit to 100 steps in the environment
-eval_tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(), duration=eval_env_steps_limit)) # 1000 steps duration
+tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(False, False), duration=train_env_steps_limit)) # set limit to n steps in the environment
+eval_tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(False, False, save_path), duration=eval_env_steps_limit)) # set limit to m steps in the environment
 
 
 #################################################
@@ -69,7 +69,7 @@ eval_tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(), du
 global_step = tf.compat.v1.train.get_or_create_global_step()
 
 actor_net = ActorNetwork(tf_env.observation_spec(), tf_env.action_spec(), fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
-critic_net = CriticNetwork((tf_env.observation_spec(), tf_env.action_spec()), joint_fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.tanh)
+critic_net = CriticNetwork((tf_env.observation_spec(), tf_env.action_spec()), joint_fc_layer_params=fc_layer_params, activation_fn=tf.keras.activations.relu)
 
 agent = SacAgent(tf_env.time_step_spec(),
                   tf_env.action_spec(),
@@ -77,24 +77,21 @@ agent = SacAgent(tf_env.time_step_spec(),
                   critic_network=critic_net,
                   actor_optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
                   critic_optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-                  alpha_optimizer=tf.keras.optimizers.Adam(learning_rate=3e-4),
-                  target_update_tau=0.005,
-                  target_update_period=1,
-                  td_errors_loss_fn=tf.math.squared_difference,
+                  alpha_optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+                  target_update_period=2,
                   gamma=0.99,
-                  reward_scale_factor=1.0,
                   train_step_counter=global_step)
 
 agent.initialize()
 
-print("Actor network summary and details")
+print("\nActor network summary and details")
 print(actor_net.summary())
 for i, layer in enumerate (actor_net.layers):
     print (i, layer)
     try: print ("    ",layer.activation)
     except AttributeError: print('   no activation attribute')
 
-print("Critic network summary and details")
+print("\nCritic network summary and details")
 print(critic_net.summary())
 for i, layer in enumerate (critic_net.layers):
     print (i, layer)
@@ -174,7 +171,7 @@ for epoch in range(epochs+1):
   if epoch % ckpts_interval == 0:
     train_checkpointer.save(global_step)
   if epoch % eval_interval == 0:
-    tf_policy_saver.save(policy_dir) # policy saving for later restore
+    tf_policy_saver.save(policy_dir+'/'+str(time.time())) # policy saving for later restore
     avg_rew = evaluate_agent(agent.policy, eval_tf_env, num_eval_episodes)
     avg_rewards = np.concatenate((avg_rewards, [[epoch, avg_rew]]), axis=0)
     data_plotter.update_eval_reward(avg_rew, eval_interval)
