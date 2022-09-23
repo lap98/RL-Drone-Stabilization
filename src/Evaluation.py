@@ -125,4 +125,4 @@ avg_rew = evaluate_agent(window,saved_policy, eval_tf_env, num_eval_episodes)
 #data_plotter.plot_evaluation_rewards(avg_rewards, save_path)
 
 # Finish up by removing from the screen
-window.close()         
+window.close()
