@@ -21,19 +21,19 @@ tf.random.set_seed(12345)
 # Reinforcement Learning parameters
 #################################################
 
-#save_path = 'C:/Users/aless/Downloads/Uni/Advanced_Deep_Learning_Models_and_Methods/Project/python_code/training_data/' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+save_path = "C:/Users/vince/Downloads/advanced_deep_learning/project/python_code/testing_data/20220920_110900"
 
 
 # Evaluation
 eval_env_steps_limit = 400 # maximum number of steps in the TimeLimit of the evaluation environment
-num_eval_episodes = 10
+num_eval_episodes = 1
 
 
 #################################################
 # Environments instantiation
 #################################################
 
-eval_tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(False, False), duration=eval_env_steps_limit)) # set limit to m steps in the environment
+eval_tf_env = tf_py_environment.TFPyEnvironment(TimeLimit(DroneEnvironment(False, False, save_path), duration=eval_env_steps_limit)) # set limit to m steps in the environment
 
 
 #################################################
@@ -46,7 +46,7 @@ global_step = tf.compat.v1.train.get_or_create_global_step() # global counter of
 # Load policy
 #################################################
 
-policy_path = os.getcwd() +'/working/working_td3_2/20220911_185243/policies'
+policy_path = "C:/Users/vince/Downloads/advanced_deep_learning/project/python_code/training_data/0_xxx_res/policies/1663517765.1436343"
 saved_policy = tf.compat.v2.saved_model.load(policy_path)
 
 #################################################
@@ -71,19 +71,21 @@ def get_wind_vector(window):
   return airsim.Vector3r(values["-XSLIDER-"],values["-YSLIDER-"],values["-ZSLIDER-"])
 
 
-
 def evaluate_agent(window, policy, eval_tf_env, num_eval_episodes):
   print('\nEVALUATING *******\n')
   total_reward = 0
   for idx in range(num_eval_episodes):
     print('Evaluation iteration:', idx)
     start = time.time()
+    #airsim.MultirotorClient().simSetWind(airsim.Vector3r(0,0,0))
     time_step = eval_tf_env.reset()
     while not time_step.is_last():
       action_step = policy.action(time_step)
-      airsim.MultirotorClient().simSetWind(get_wind_vector(window))
+      #print(time_step)
+      #print(action_step)
       time_step = eval_tf_env.step(action_step.action)
       total_reward += float(time_step.reward)
+    time_step = eval_tf_env.reset()
     end = time.time()
     print('Control loop timing for 1 timestep [s]:', (end-start)/eval_env_steps_limit)
   print('\n******* EVALUATION ENDED\n')
