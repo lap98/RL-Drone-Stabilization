@@ -36,7 +36,7 @@ class DroneEnvironment(py_environment.PyEnvironment):
     self.client.enableApiControl(True)
     self.client.armDisarm(True)
     
-    self._observation_spec = array_spec.ArraySpec(shape=(19,),dtype=np.float32, name='observation') # Observation (drone state) space
+    self._observation_spec = array_spec.ArraySpec(shape=(19,), dtype=np.float32, name='observation') # Observation (drone state) space
     self._action_spec = array_spec.BoundedArraySpec(shape=(4,), dtype=np.float32, name='action', minimum=0.0, maximum=1.0) # Action space: control motors power
     
     #self._state, _, _, _, _, _, _ = self.getState()
@@ -54,7 +54,7 @@ class DroneEnvironment(py_environment.PyEnvironment):
   '''Generates a new pose, randomized or not
   '''
   def getNewPose(self, random=False, random_uniform=False):
-    pos_stddev = 0.5 # in [m]
+    pos_stddev = 0.25 # in [m]
     or_stddev = 0.3 # in [rad], 0.15 -> at most around 20 deg of inclination
     if random:
       if random_uniform:

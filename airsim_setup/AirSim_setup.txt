@@ -1,0 +1,67 @@
+Setup
+-----
+https://www.youtube.com/watch?v=DiqgsWIOoW4
+https://www.youtube.com/watch?v=uMgyNWmsaHA
+https://github.com/ElishaAz/simple_airsim
+https://microsoft.github.io/AirSim/use_precompiled/
+
+Docs
+----
+https://microsoft.github.io/AirSim/api_docs/html/
+
+Setup Unreal and Visual Studio for AirSim
+-----------------------------------------
+The project was tested on AirSim 1.7.0 + Visual Studio 2019 and AirSim 1.8.1 + Visual Studio 2022
+1.	Install Unreal Engine 4.27 (install epic games launcher, put account, download Engine), open it and "fix now"
+2.	Download AirSim prebuilt source code and the environment that you want
+3.	Place the Environment in AirSim/Unreal/Environment
+4.0	Install Visual Studio 2019 + C++ dev / Python
+4.1	https://microsoft.github.io/AirSim/build_windows/
+	Use Visual Studio 2019 Developer Command Prompt with Admin priv to run AirSim-1.7.0-windows/build.cmd
+5.	https://microsoft.github.io/AirSim/unreal_blocks/
+	Install .net framework 4.6.2 Developer (SDK), desktop runtime 3.1.24 (asks for it anyways)
+	Run AirSim-1.7.0-windows/Unreal/Environments/Blocks/update_from_git.bat
+6.	Open (AirSim-1.7.0-windows/Unreal/Environments/Blocks/Blocks).sln with Visual Studio 2022 (or 2019 if the only installed), set Blocks as default (startup) Project, 	DebugGame Editor & Win64, press F5
+	https://docs.microsoft.com/it-it/visualstudio/ide/how-to-set-multiple-startup-projects?view=vs-2022
+7.	Once Unreal is open with the project, click "Play" and use keyboard to move wtc
+8.	Unreal might lag if there is another window on top: Edit->Editor preferences->search Performance->disable "Use less CPU when in background"
+
+Setup python environment for AirSim and RL
+------------------------------------------
+1. Create Anaconda env: advdl_env, python 3.9
+2. pip install numpy, opencv-python, msgpack-rpc-python, airsim (https://microsoft.github.io/AirSim/apis/)
+3. Install Visual Studio Code & recommended python extensions
+4. pip install tensorflow==2.9
+5. pip install tf-agents==0.13
+6. pip install tensorflow-probability==0.17
+7. pip install protobuf==3.20
+
+Setup python interface with AirSim
+----------------------------------
+1. Take AirSim-1.7.0-windows/PythonClient/multirotor/hello_drone.py
+2. Delete first line of import
+
+Setup drone settings
+--------------------
+1. Setup the settings.json (drone settings) in the working folder in Documenti/AirSim
+2. Decide whether to use simpleflight or PX4 (https://microsoft.github.io/AirSim/px4_setup/)
+
+Reference system
+----------------
+http://www.diva-portal.se/smash/get/diva2:1251208/FULLTEXT01.pdf
+
+Other simulators
+----------------
+https://github.com/bobzwik/Quadcopter_SimCon
+https://pypi.org/project/quad-sim-python/
+https://dronekit-python.readthedocs.io/en/latest/develop/sitl_setup.html
+ROS/Gazebo: http://wiki.ros.org/tum_simulator
+
+Resources
+---------
+https://microsoft.github.io/AirSim/sensors/
+https://microsoft.github.io/AirSim/image_apis/
+https://towardsdatascience.com/deep-reinforcement-learning-for-drones-in-3d-realistic-environments-36821b6ee077
+https://www.youtube.com/watch?v=A7B6ijIhKao @27.00
+https://github.com/microsoft/airsim-drone-racing-vae-imitation
+https://microsoft.github.io/AirSim/px4_setup/
